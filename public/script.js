@@ -1,9 +1,16 @@
-const socket = io('/')
+const socket = io()
 const videoGrid = document.getElementById('video-grid')
 const myPeer = new Peer(null, {
-    host: '/',
-    port: '4001'
+//host: 'choodo.io',
+//path: '/peerjs',
+        //port: '4000',
+debug: 2
 })
+
+console.log('peer:')
+console.log(myPeer)
+console.log('\nsocket:')
+console.log(socket)
 
 const myVideo = document.createElement('video')
 myVideo.muted = true
@@ -11,41 +18,49 @@ var STREAM = undefined;
 var MY_ID = undefined;
 const peers = {}
 
-myPeer.on('open', id => {
-    console.log(`my id: ${id}`)
-    MY_ID = id;
-}, err => {console.log(err)})
-
-navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
-}).then(stream => {
-    
-    socket.on('user-connected', userId => {
-        console.log(`User connected: ${userId}`)
-        connectToNewUser(userId, stream)
+async function openPeer(){
+    myPeer.on('open', id => {
+        console.log(`my id: ${id}`)
+        MY_ID = id;
     }, err => {console.log(err)})
+}
 
-    socket.on('user-disconnected', userId => {
-        if(peers[userId]){
-            peers[userId].close()
-        }
-    })
-    
-    myPeer.on('call', call => {
-        call.answer(stream)
-        var video = document.createElement('video')
-        call.on('stream', userStream =>{
-            addVideoStream(video, userStream)
+openPeer()
+
+
+setTimeout(()=>{
+    navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+    }).then(stream => {
+        
+        socket.on('user-connected', userId => {
+            console.log(`User connected: ${userId}`)
+            connectToNewUser(userId, stream)
+        }, err => {console.log(err)})
+
+        socket.on('user-disconnected', userId => {
+            if(peers[userId]){
+                peers[userId].close()
+            }
         })
-    }, err => {console.log(err)})
+        
+        myPeer.on('call', call => {
+            call.answer(stream)
+            var video = document.createElement('video')
+            call.on('stream', userStream =>{
+                addVideoStream(video, userStream)
+            })
+        }, err => {console.log(err)})
 
-    
+        
 
-    addVideoStream(myVideo, stream)
-
-    socket.emit('join-room', ROOM_ID, MY_ID)
-})
+        addVideoStream(myVideo, stream)
+        
+        console.log(`emitting join-room. room id: (${ROOM_ID}), MY_ID: (${MY_ID})`)
+        socket.emit('join-room', ROOM_ID, MY_ID)
+    })
+},2000);
 
 
 
