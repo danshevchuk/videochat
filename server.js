@@ -5,6 +5,8 @@ const io = require('socket.io')(server)
 const {v4: uuidV4} = require('uuid')
 var ExpressPeerServer = require('peer').ExpressPeerServer;
 
+
+const PORT = 4000;
 //const cors = require('cors');
 
 //const corsOption = {
@@ -34,14 +36,12 @@ io.on('connection', socket => {
             socket.to(roomId).emit('user-disconnected', userId)
         })
     })
-
-    
 })
-
 
 var options = {
     debug: true
 }
 app.use('/peerjs', ExpressPeerServer(server, options));
 
-server.listen(4000)
+server.listen(PORT)
+console.log(`Listening on port ${PORT}`)
